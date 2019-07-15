@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: site
+  labels:
+    app: site
+spec:
+  ports:
+  - port: 80
+    name: http
+  selector:
+    app: site
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: site
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: site
+        version: v1
+    spec:
+      containers:
+      - name: site
+        image: carlo/hugo:1.0
+        command:
+         - /hugo 
+         - server 
+         - --bind=0.0.0.0
+         - --port=80
+         - --baseURL=http://www.carlo.ltd
+         - --theme=hugo-nederburg-theme
+         - --debug
+         - -v
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+        volumeMounts:
+          - name: site-data
+            mountPath: /site
+      volumes:
+        - name: site-data
+          persistentVolumeClaim:
+            claimName: nfs-site-pvc
+          #hostPath:
+          #  path: /data/k8s-data/downfile
+          #  type: Directory
